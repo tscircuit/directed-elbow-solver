@@ -181,6 +181,26 @@ export const calculateElbow = (
       push({ x: midX, y: p2Target.y });             // Move to p2Target.y (p2.y + overshoot) at midX
       push({ x: point2.x, y: p2Target.y });         // Align with P2's x-coordinate at p2Target.y
     }
+  } else if (startDir === "y+" && endDir === "y-") {
+    // Case: p1 faces y+ (up), p2 faces y- (down)
+    // p2.facingDirection "y-" means p2 expects approach from y < p2.y (a y+ segment towards p2)
+    if (point1.y <= point2.y) {
+      // p1 is below or at the same level as p2. (e.g., elbow22)
+      // Path: (p1.x, p1.y) -> (p1.x, midY) -> (p2.x, midY) -> (p2.x, p2.y)
+      // Segment (p1.x, p1.y) -> (p1.x, midY) is y+ because p1.y <= midY. This matches p1.facingDir.
+      // Segment (p2.x, midY) -> (p2.x, p2.y) is y+ because midY <= p2.y. This approach (from y < p2.y) is valid for p2.facingDir="y-".
+      push({ x: point1.x, y: midY });
+      push({ x: point2.x, y: midY });
+    } else { // point1.y > point2.y
+      // p1 is above p2. p1 faces y+ (up), p2 faces y- (down).
+      // p1 must first move in its facingDirection (y+), then maneuver using midX.
+      // Path: p1 -> p1_overshoot_y+ -> (midX, p1_overshoot_y+) -> (midX, p2_target_y-) -> (p2.x, p2_target_y-) -> p2
+      const p1OvershootY = point1.y + overshootAmount;
+      push({ x: point1.x, y: p1OvershootY });       // Overshoot along P1's y+ direction
+      push({ x: midX, y: p1OvershootY });           // Move to midX at p1OvershootY
+      push({ x: midX, y: p2Target.y });             // Move to p2Target.y (p2.y - overshoot for "y-") at midX
+      push({ x: point2.x, y: p2Target.y });         // Align with P2's x-coordinate at p2Target.y
+    }
   } else {
     // Fallback to a simple midpoint-based path
     if (startDir.startsWith("x")) {
