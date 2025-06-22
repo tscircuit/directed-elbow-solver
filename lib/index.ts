@@ -64,8 +64,9 @@ export const calculateElbow = (
     push({ x: p2Target.x, y: midY })
     push({ x: p2Target.x, y: point2.y })
   } else if (startDir === "y+" && endDir === "y+") {
-    push({ x: point1.x, y: p2Target.y })
-    push({ x: point2.x, y: p2Target.y })
+    const commonY = Math.max(point1.y + overshootAmount, p2Target.y)
+    push({ x: point1.x, y: commonY })
+    push({ x: point2.x, y: commonY })
   } else if (startDir === "y-" && endDir === "x+") {
     push({ x: point1.x, y: point1.y - overshootAmount })
     push({ x: midX, y: point1.y - overshootAmount })
@@ -81,8 +82,17 @@ export const calculateElbow = (
     push({ x: midX, y: p2Target.y })
     push({ x: point2.x, y: p2Target.y })
   } else if (startDir === "y-" && endDir === "y-") {
-    push({ x: point1.x, y: point1.y - overshootAmount })
-    push({ x: point2.x, y: point1.y - overshootAmount })
+    const commonY = Math.min(point1.y - overshootAmount, p2Target.y)
+    push({ x: point1.x, y: commonY })
+    push({ x: point2.x, y: commonY })
+  } else if (startDir === "x+" && endDir === "x+") {
+    const commonX = Math.max(point1.x + overshootAmount, p2Target.x)
+    push({ x: commonX, y: point1.y })
+    push({ x: commonX, y: point2.y })
+  } else if (startDir === "x-" && endDir === "x-") {
+    const commonX = Math.min(point1.x - overshootAmount, p2Target.x)
+    push({ x: commonX, y: point1.y })
+    push({ x: commonX, y: point2.y })
   } else if (startDir === "x-" && endDir === "y+") {
     push({ x: point1.x - overshootAmount, y: point1.y })
     push({ x: point1.x - overshootAmount, y: p2Target.y })
