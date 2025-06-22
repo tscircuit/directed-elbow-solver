@@ -22,16 +22,21 @@ const App: React.FC = () => {
     y: 200,
     facingDirection: "y-",
   })
-  const [path, setPath] = useState<Array<{ x: number; y: number }>>([])
+  const [calculatedElbowPath, setCalculatedElbowPath] = useState<Array<{ x: number; y: number }>>([])
+  const [userLoadedPath, setUserLoadedPath] = useState<Array<{ x: number; y: number }> | null>(null)
   const [draggingPoint, setDraggingPoint] = useState<"point1" | "point2" | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [sceneJsonInput, setSceneJsonInput] = useState("")
+  const [pathJsonForTextarea, setPathJsonForTextarea] = useState<string>("")
 
   useEffect(() => {
+    // If point1 or point2 changes, it means user interacted, so clear any loaded path override.
+    setUserLoadedPath(null)
+
     const p1ToUse = { ...point1, facingDirection: point1.facingDirection === "none" ? undefined : point1.facingDirection }
     const p2ToUse = { ...point2, facingDirection: point2.facingDirection === "none" ? undefined : point2.facingDirection }
-    const newPath = calculateElbow(p1ToUse, p2ToUse, { overshoot: OVERSHOOT_AMOUNT })
-    setPath(newPath)
+    const newCalculatedPath = calculateElbow(p1ToUse, p2ToUse, { overshoot: OVERSHOOT_AMOUNT })
+    setCalculatedElbowPath(newCalculatedPath)
 
     // Update scene JSON input when points change
     setSceneJsonInput(
@@ -45,6 +50,14 @@ const App: React.FC = () => {
       ),
     )
   }, [point1, point2])
+
+  // Determine the path to display in SVG and to use for the output textarea
+  const finalDisplayPath = userLoadedPath || calculatedElbowPath
+
+  // Effect to update the path JSON in the textarea whenever finalDisplayPath changes
+  useEffect(() => {
+    setPathJsonForTextarea(JSON.stringify(finalDisplayPath, null, 2))
+  }, [finalDisplayPath])
 
   const getSVGCoordinates = (event: React.MouseEvent): { x: number; y: number } => {
     if (svgRef.current) {
@@ -156,6 +169,30 @@ const App: React.FC = () => {
     }
   }
 
+  const handleLoadPathFromJson = () => {
+    try {
+      // IMPORTANT: Using eval can be a security risk if the input is from an untrusted source.
+      // Here, we assume the user is pasting their own, known object literals.
+      // Wrap with parentheses to ensure it's evaluated as an expression.
+      const parsedPath = eval(`(${pathJsonForTextarea})`)
+
+      if (
+        Array.isArray(parsedPath) &&
+        parsedPath.every(
+          (p) => typeof p === "object" && p !== null && typeof p.x === "number" && typeof p.y === "number",
+        )
+      ) {
+        setUserLoadedPath(parsedPath)
+      } else {
+        alert(
+          "Invalid path JSON structure. Expected an array of objects with x and y properties (e.g., [{x:0,y:0},{x:10,y:10}]).",
+        )
+      }
+    } catch (error) {
+      alert("Error parsing path JSON: " + (error as Error).message)
+    }
+  }
+
   const renderArrow = (point: ElbowPoint) => {
     if (!point.facingDirection || point.facingDirection === "none") return null
     let x2 = point.x
@@ -230,9 +267,9 @@ const App: React.FC = () => {
           ))}
 
           {/* Path */}
-          {path.length > 1 && (
+          {finalDisplayPath.length > 1 && (
             <polyline
-              points={path.map(p => `${p.x},${p.y}`).join(" ")}
+              points={finalDisplayPath.map(p => `${p.x},${p.y}`).join(" ")}
               fill="none"
               stroke="black"
               strokeWidth="2"
@@ -272,12 +309,15 @@ const App: React.FC = () => {
       </div>
 
       <div style={{ marginTop: "20px", width: "100%", maxWidth: `${SVG_WIDTH}px` }}>
-        <label htmlFor="path-output" style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>Elbow Path Output:</label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+          <label htmlFor="path-output" style={{ fontWeight: "bold" }}>Elbow Path Output:</label>
+          <button onClick={handleLoadPathFromJson} style={{ padding: "3px 8px" }}>Load</button>
+        </div>
         <textarea
           id="path-output"
-          readOnly
-          value={JSON.stringify(path, null, 2)}
-          style={{ width: "100%", height: "150px", fontFamily: "monospace", fontSize: "12px" }}
+          value={pathJsonForTextarea}
+          onChange={(e) => setPathJsonForTextarea(e.target.value)}
+          style={{ width: "100%", height: "150px", fontFamily: "monospace", fontSize: "12px", boxSizing: "border-box" }}
         />
       </div>
     </div>
