@@ -91,10 +91,21 @@ export const calculateElbow = (
       push({ x: point1.x + overshootAmount, y: point1.y });
       push({ x: point1.x + overshootAmount, y: midY });
       push({ x: point2.x, y: midY }); // point2.x is same as point1.x here
-    } else { // Default (e.g., elbow08) and other complex cases
-      push({ x: midX, y: point1.y });
-      push({ x: midX, y: p2Target.y }); // p2Target.y = point2.y + overshootAmount
-      push({ x: point2.x, y: p2Target.y });
+    } else { // Other cases (includes elbow08 and elbow17)
+      // Here, point1.x != point2.x.
+      // And !(point1.x < point2.x && point1.y > point2.y)
+      if (point1.x < point2.x) { // p1 is to the left of p2, facing right (towards p2.x). Like elbow08.
+        // Path: p1 -> (midX, p1.y) -> (midX, p2Target.y) -> (p2.x, p2Target.y) -> p2
+        push({ x: midX, y: point1.y });
+        push({ x: midX, y: p2Target.y });
+        push({ x: point2.x, y: p2Target.y });
+      } else { // point1.x > point2.x. p1 is to the right of p2, facing right (away from p2.x). Like elbow17.
+        // Path: p1 -> (p1.x+overshoot, p1.y) -> (p1.x+overshoot, p2Target.y) -> (p2.x, p2Target.y) -> p2
+        const p1OvershootX = point1.x + overshootAmount;
+        push({ x: p1OvershootX, y: point1.y });
+        push({ x: p1OvershootX, y: p2Target.y });
+        push({ x: point2.x, y: p2Target.y });
+      }
     }
   } else if (startDir === "y-" && endDir === "y-") {
     const commonY = Math.min(point1.y - overshootAmount, p2Target.y)
