@@ -79,9 +79,23 @@ export const calculateElbow = (
     push({ x: p2Target.x, y: p1OvershootY }); // Move horizontally to P2's target X
     push({ x: p2Target.x, y: point2.y }); // Move vertically to P2's actual Y
   } else if (startDir === "x+" && endDir === "y+") {
-    push({ x: midX, y: point1.y })
-    push({ x: midX, y: p2Target.y })
-    push({ x: point2.x, y: p2Target.y })
+    // p1(x,y,x+), p2(x',y',y+). p2 expects approach from y > y' (y- segment).
+    if (point1.x < point2.x && point1.y > point2.y) { // Case like elbow15: simple L-bend
+      // Path: (p1.x,p1.y) -> (p2.x,p1.y) -> (p2.x,p2.y)
+      // First segment (p1.x,p1.y)->(p2.x,p1.y) is x+ (since p1.x < p2.x).
+      // Second segment (p2.x,p1.y)->(p2.x,p2.y) is y- (since p1.y > p2.y).
+      // This y- approach matches p2.facingDirection "y+" (which implies approach from y > p2.y).
+      push({ x: point2.x, y: point1.y });
+    } else if (point1.x === point2.x) { // Collinear X, p1 facing x+. Must emerge.
+      // Similar to elbow16 logic: overshoot, turn at midY.
+      push({ x: point1.x + overshootAmount, y: point1.y });
+      push({ x: point1.x + overshootAmount, y: midY });
+      push({ x: point2.x, y: midY }); // point2.x is same as point1.x here
+    } else { // Default (e.g., elbow08) and other complex cases
+      push({ x: midX, y: point1.y });
+      push({ x: midX, y: p2Target.y }); // p2Target.y = point2.y + overshootAmount
+      push({ x: point2.x, y: p2Target.y });
+    }
   } else if (startDir === "y-" && endDir === "y-") {
     const commonY = Math.min(point1.y - overshootAmount, p2Target.y)
     push({ x: point1.x, y: commonY })
@@ -113,7 +127,24 @@ export const calculateElbow = (
       push({ x: point2.x, y: p2Target.y });
     }
   } else if (startDir === "x+" && endDir === "y-") {
-    push({ x: point2.x, y: point1.y });
+    // p1(x,y,x+), p2(x',y',y-). p2 expects approach from y < y' (y+ segment).
+    if (point1.x === point2.x) { // Case like elbow16: Collinear X, p1 facing x+. Must emerge.
+      // Overshoot, turn at midY.
+      push({ x: point1.x + overshootAmount, y: point1.y });
+      push({ x: point1.x + overshootAmount, y: midY });
+      push({ x: point2.x, y: midY }); // point2.x is same as point1.x here
+    } else if (point1.x < point2.x && point1.y < point2.y) { // Case like elbow11: simple L-bend
+      // Path: (p1.x,p1.y) -> (p2.x,p1.y) -> (p2.x,p2.y)
+      // First segment is x+ (since p1.x < p2.x).
+      // Second segment is y+ (since p1.y < p2.y).
+      // This y+ approach matches p2.facingDirection "y-" (which implies approach from y < p2.y).
+      push({ x: point2.x, y: point1.y });
+    } else { // Default and other complex cases (e.g. p1.x > p2.x or p1.y > p2.y needing U-turns)
+      // Path: p1 overshoots, aligns with p2Target.y, then aligns with p2.x.
+      push({ x: point1.x + overshootAmount, y: point1.y });
+      push({ x: point1.x + overshootAmount, y: p2Target.y }); // p2Target.y = point2.y - overshootAmount
+      push({ x: point2.x, y: p2Target.y });
+    }
   } else {
     // Fallback to a simple midpoint-based path
     if (startDir.startsWith("x")) {
