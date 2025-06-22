@@ -53,14 +53,54 @@ export const calculateElbow = (
   const midY = (point1.y + finalTargetY) / 2
 
   if (didP1Overshoot) {
-    if (p1Axis === "x") {
-      // Overshoot was horizontal, next segments form VHV from curr
-      path.push({ x: currX, y: midY })
-      path.push({ x: finalTargetX, y: midY })
+    let p2OvershootsToo = false
+    // These store the coordinate P2 would "retreat" to if it also overshoots.
+    let p2OvershotTargetX = finalTargetX
+    let p2OvershotTargetY = finalTargetY
+
+    // Check if P2's facing direction warrants an overshoot relative to P1's overshot position
+    if (p1Axis === "x" && p2Axis === "x") {
+      // P1 overshot horizontally, P2 also faces horizontally.
+      // currX is P1's x-coordinate after its overshoot.
+      if (p2Dir === "x+" && currX < finalTargetX) {
+        p2OvershotTargetX = finalTargetX + overshootAmount
+        p2OvershootsToo = true
+      } else if (p2Dir === "x-" && currX > finalTargetX) {
+        p2OvershotTargetX = finalTargetX - overshootAmount
+        p2OvershootsToo = true
+      }
+    } else if (p1Axis === "y" && p2Axis === "y") {
+      // P1 overshot vertically, P2 also faces vertically.
+      // currY is P1's y-coordinate after its overshoot.
+      if (p2Dir === "y+" && currY < finalTargetY) {
+        p2OvershotTargetY = finalTargetY + overshootAmount
+        p2OvershootsToo = true
+      } else if (p2Dir === "y-" && currY > finalTargetY) {
+        p2OvershotTargetY = finalTargetY - overshootAmount
+        p2OvershootsToo = true
+      }
+    }
+
+    if (p2OvershootsToo) {
+      // 6-point path: P1, P1_OS, A, B, C, P2
+      if (p1Axis === "x") { // P1 overshot horizontally
+        path.push({ x: currX, y: midY }) // A: (P1_OS.x, midY)
+        path.push({ x: p2OvershotTargetX, y: midY }) // B: (P2_OS_Target.x, midY)
+        path.push({ x: p2OvershotTargetX, y: finalTargetY }) // C: (P2_OS_Target.x, P2.y)
+      } else { // p1Axis === "y" - P1 overshot vertically
+        path.push({ x: midX, y: currY }) // A: (midX, P1_OS.y)
+        path.push({ x: midX, y: p2OvershotTargetY }) // B: (midX, P2_OS_Target.y)
+        path.push({ x: finalTargetX, y: p2OvershotTargetY }) // C: (P2.x, P2_OS_Target.y)
+      }
     } else {
-      // p1Axis === 'y' (Overshoot was vertical), next segments form HVH from curr
-      path.push({ x: midX, y: currY })
-      path.push({ x: midX, y: finalTargetY })
+      // 5-point path: P1, P1_OS, A, B, P2 (P2 does not effectively overshoot)
+      if (p1Axis === "x") { // P1 overshot horizontally
+        path.push({ x: currX, y: midY }) // A
+        path.push({ x: finalTargetX, y: midY }) // B
+      } else { // p1Axis === 'y' - P1 overshot vertically
+        path.push({ x: midX, y: currY }) // A
+        path.push({ x: midX, y: finalTargetY }) // B
+      }
     }
   } else {
     // No p1 overshoot
