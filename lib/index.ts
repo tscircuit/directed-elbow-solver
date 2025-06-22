@@ -74,7 +74,15 @@ export const calculateElbow = (
       path.push({ x: p2EffectiveTargetX, y: midYOriginal })
     } else { // p1Axis === "y" - P1 overshot vertically
       path.push({ x: midXOriginal, y: currY })
-      path.push({ x: midXOriginal, y: p2EffectiveTargetY })
+      // elbow06 specific case: P1 overshot on Y, P2 faces X+
+      // p2Dir is point2.facingDirection
+      if (p2Dir === "x+") {
+        path.push({ x: midXOriginal, y: midYOriginal })
+        path.push({ x: p2EffectiveTargetX, y: midYOriginal })
+      } else {
+        // This handles elbow03 (P1 overshot Y, P2 faces X-) and other cases.
+        path.push({ x: midXOriginal, y: p2EffectiveTargetY })
+      }
     }
   } else {
     // No P1 overshoot. Path from point1.x/y to p2EffectiveTargetX/Y.
