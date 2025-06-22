@@ -74,9 +74,10 @@ export const calculateElbow = (
     push({ x: p2Target.x, y: midY })
     push({ x: p2Target.x, y: point2.y })
   } else if (startDir === "y+" && endDir === "x+") {
-    push({ x: point1.x, y: midX })
-    push({ x: p2Target.x, y: midX })
-    push({ x: p2Target.x, y: point2.y })
+    const p1OvershootY = point1.y + overshootAmount;
+    push({ x: point1.x, y: p1OvershootY }); // Move along P1's facing direction
+    push({ x: p2Target.x, y: p1OvershootY }); // Move horizontally to P2's target X
+    push({ x: p2Target.x, y: point2.y }); // Move vertically to P2's actual Y
   } else if (startDir === "x+" && endDir === "y+") {
     push({ x: midX, y: point1.y })
     push({ x: midX, y: p2Target.y })
