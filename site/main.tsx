@@ -36,7 +36,7 @@ const App: React.FC = () => {
       const svgRect = svgRef.current.getBoundingClientRect()
       return {
         x: event.clientX - svgRect.left,
-        y: event.clientY - svgRect.top,
+        y: SVG_HEIGHT - (event.clientY - svgRect.top), // Invert Y for Cartesian
       }
     }
     return { x: 0, y: 0 }
@@ -127,35 +127,40 @@ const App: React.FC = () => {
 
       <svg ref={svgRef} width={SVG_WIDTH} height={SVG_HEIGHT}>
         <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto" preserveAspectRatio="none">
+            {/* preserveAspectRatio="none" might be needed if marker scales unexpectedly due to parent transform */}
             <polygon points="0 0, 10 3.5, 0 7" fill="blue" />
           </marker>
         </defs>
-
-        {/* Path */}
-        {path.length > 1 && (
-          <polyline
-            points={path.map(p => `${p.x},${p.y}`).join(" ")}
-            fill="none"
-            stroke="black"
-            strokeWidth="2"
-          />
-        )}
-
-        {/* Points */}
-        {[point1, point2].map((p, index) => (
-          <g key={index}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={POINT_RADIUS}
-              fill={draggingPoint === (index === 0 ? "point1" : "point2") ? "red" : "orange"}
-              onMouseDown={(e) => handleMouseDown(index === 0 ? "point1" : "point2", e)}
-              style={{ cursor: "grab" }}
+        {/* Apply Cartesian coordinate system transform */}
+        <g transform={`translate(0, ${SVG_HEIGHT}) scale(1, -1)`}>
+          {/* Path */}
+          {path.length > 1 && (
+            <polyline
+              points={path.map(p => `${p.x},${p.y}`).join(" ")}
+              fill="none"
+              stroke="black"
+              strokeWidth="2"
             />
-            {renderArrow(p)}
-          </g>
-        ))}
+          )}
+
+          {/* Points */}
+          {[point1, point2].map((p, index) => (
+            <g key={index}>
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={POINT_RADIUS}
+                fill={draggingPoint === (index === 0 ? "point1" : "point2") ? "red" : "orange"}
+                onMouseDown={(e) => handleMouseDown(index === 0 ? "point1" : "point2", e)}
+                style={{ cursor: "grab" }}
+                // Vector-effect non-scaling-stroke might be useful if stroke width is affected by scale
+                // vectorEffect="non-scaling-stroke" 
+              />
+              {renderArrow(p)}
+            </g>
+          ))}
+        </g>
       </svg>
     </div>
   )
