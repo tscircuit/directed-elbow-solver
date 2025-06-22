@@ -43,90 +43,84 @@ export const calculateElbow = (
     path.push({ x: currX, y: currY })
   }
 
-  const p1Axis = (p1Dir && (p1Dir.startsWith("x") ? "x" : "y")) || null
+  // p1Dir is already defined. currX, currY are p1's coordinates after its potential overshoot.
+  // didP1Overshoot indicates if p1 overshot.
+
+  // Determine P2's effective target coordinates for path planning
+  let p2EffectiveTargetX = point2.x
+  let p2EffectiveTargetY = point2.y
   const p2Dir = point2.facingDirection
+  let p2WillHaveApproachSegment = false
+
+  if (p2Dir) {
+    p2WillHaveApproachSegment = true
+    if (p2Dir === "x+") p2EffectiveTargetX += overshootAmount
+    else if (p2Dir === "x-") p2EffectiveTargetX -= overshootAmount
+    else if (p2Dir === "y+") p2EffectiveTargetY += overshootAmount
+    else if (p2Dir === "y-") p2EffectiveTargetY -= overshootAmount
+  }
+
+  const p1Axis = (p1Dir && (p1Dir.startsWith("x") ? "x" : "y")) || null
   const p2Axis = (p2Dir && (p2Dir.startsWith("x") ? "x" : "y")) || null
 
-  const finalTargetX = point2.x
-  const finalTargetY = point2.y
-  const midX = (point1.x + finalTargetX) / 2
-  const midY = (point1.y + finalTargetY) / 2
+  // Midpoints based on original point1 and point2 coordinates
+  const midXOriginal = (point1.x + point2.x) / 2
+  const midYOriginal = (point1.y + point2.y) / 2
 
   if (didP1Overshoot) {
-    let p2OvershootsToo = false
-    // These store the coordinate P2 would "retreat" to if it also overshoots.
-    let p2OvershotTargetX = finalTargetX
-    let p2OvershotTargetY = finalTargetY
-
-    // Check if P2's facing direction warrants an overshoot relative to P1's overshot position
-    if (p1Axis === "x" && p2Axis === "x") {
-      // P1 overshot horizontally, P2 also faces horizontally.
-      // currX is P1's x-coordinate after its overshoot.
-      if (p2Dir === "x+" && currX < finalTargetX) {
-        p2OvershotTargetX = finalTargetX + overshootAmount
-        p2OvershootsToo = true
-      } else if (p2Dir === "x-" && currX > finalTargetX) {
-        p2OvershotTargetX = finalTargetX - overshootAmount
-        p2OvershootsToo = true
-      }
-    } else if (p1Axis === "y" && p2Axis === "y") {
-      // P1 overshot vertically, P2 also faces vertically.
-      // currY is P1's y-coordinate after its overshoot.
-      if (p2Dir === "y+" && currY < finalTargetY) {
-        p2OvershotTargetY = finalTargetY + overshootAmount
-        p2OvershootsToo = true
-      } else if (p2Dir === "y-" && currY > finalTargetY) {
-        p2OvershotTargetY = finalTargetY - overshootAmount
-        p2OvershootsToo = true
-      }
-    }
-
-    if (p2OvershootsToo) {
-      // 6-point path: P1, P1_OS, A, B, C, P2
-      if (p1Axis === "x") { // P1 overshot horizontally
-        path.push({ x: currX, y: midY }) // A: (P1_OS.x, midY)
-        path.push({ x: p2OvershotTargetX, y: midY }) // B: (P2_OS_Target.x, midY)
-        path.push({ x: p2OvershotTargetX, y: finalTargetY }) // C: (P2_OS_Target.x, P2.y)
-      } else { // p1Axis === "y" - P1 overshot vertically
-        path.push({ x: midX, y: currY }) // A: (midX, P1_OS.y)
-        path.push({ x: midX, y: p2OvershotTargetY }) // B: (midX, P2_OS_Target.y)
-        path.push({ x: finalTargetX, y: p2OvershotTargetY }) // C: (P2.x, P2_OS_Target.y)
-      }
-    } else {
-      // 5-point path: P1, P1_OS, A, B, P2 (P2 does not effectively overshoot)
-      if (p1Axis === "x") { // P1 overshot horizontally
-        path.push({ x: currX, y: midY }) // A
-        path.push({ x: finalTargetX, y: midY }) // B
-      } else { // p1Axis === 'y' - P1 overshot vertically
-        path.push({ x: midX, y: currY }) // A
-        path.push({ x: midX, y: finalTargetY }) // B
-      }
+    // P1 overshot (moved away from P2's quadrant). Path from currX/Y to p2EffectiveTargetX/Y.
+    if (p1Axis === "x") { // P1 overshot horizontally
+      path.push({ x: currX, y: midYOriginal })
+      path.push({ x: p2EffectiveTargetX, y: midYOriginal })
+    } else { // p1Axis === "y" - P1 overshot vertically
+      path.push({ x: midXOriginal, y: currY })
+      path.push({ x: midXOriginal, y: p2EffectiveTargetY })
     }
   } else {
-    // No p1 overshoot
-    if (p1Axis === "x" && p2Axis === "y") {
-      // HV L-shape
-      path.push({ x: finalTargetX, y: currY })
-    } else if (p1Axis === "y" && p2Axis === "x") {
-      // VH L-shape
-      path.push({ x: currX, y: finalTargetY })
-    } else if (
-      (p1Axis === "x" && p2Axis === "x") ||
+    // No P1 overshoot. Path from point1.x/y to p2EffectiveTargetX/Y.
+    // currX/Y are equal to point1.x/y here.
+    if (p1Axis === "x" && p2Axis === "y") { // HV L-shape
+      path.push({ x: p2EffectiveTargetX, y: currY })
+    } else if (p1Axis === "y" && p2Axis === "x") { // VH L-shape
+      path.push({ x: currX, y: p2EffectiveTargetY })
+    } else if (p1Axis === "x" && p2Axis === "x") { // Both X-directed
+      const yIntermediate = point2.y - Math.sign(point2.y - point1.y) * overshootAmount
+      path.push({ x: midXOriginal, y: currY })
+      path.push({ x: midXOriginal, y: yIntermediate })
+      path.push({ x: p2EffectiveTargetX, y: yIntermediate })
+    } else if (p1Axis === "y" && p2Axis === "y") { // Both Y-directed (elbow05 case)
+      const xIntermediate = point2.x - Math.sign(point2.x - point1.x) * overshootAmount
+      path.push({ x: currX, y: midYOriginal })
+      path.push({ x: xIntermediate, y: midYOriginal })
+      path.push({ x: xIntermediate, y: p2EffectiveTargetY })
+    } else if ( // Default HVH U-shape
       (p1Axis === "x" && !p2Axis) ||
       (!p1Axis && p2Axis === "x") ||
-      (!p1Axis && !p2Axis) // Default HVH if no directions or x-dominant
+      (!p1Axis && !p2Axis)
     ) {
-      // HVH U-shape
-      path.push({ x: midX, y: currY })
-      path.push({ x: midX, y: finalTargetY })
-    } else {
-      // VHV U-shape for (y,y), (y,null), (null,y)
-      path.push({ x: currX, y: midY })
-      path.push({ x: finalTargetX, y: midY })
+      path.push({ x: midXOriginal, y: currY })
+      path.push({ x: midXOriginal, y: p2EffectiveTargetY })
+    } else { // Default VHV U-shape (covers (y,null), (null,y))
+      path.push({ x: currX, y: midYOriginal })
+      path.push({ x: p2EffectiveTargetX, y: midYOriginal })
     }
   }
 
-  path.push({ x: finalTargetX, y: finalTargetY })
+  // Add p2EffectiveTarget to the path if it's not already the last point
+  const lastPtBeforeEffective = path[path.length - 1]
+  if (lastPtBeforeEffective.x !== p2EffectiveTargetX || lastPtBeforeEffective.y !== p2EffectiveTargetY) {
+    path.push({ x: p2EffectiveTargetX, y: p2EffectiveTargetY })
+  }
+
+  // If P2 has a facing direction, add the final P2 point (handles the approach segment)
+  if (p2WillHaveApproachSegment) {
+    const lastPtBeforeFinal = path[path.length - 1]
+    // Only add point2 if it's different from p2EffectiveTarget (i.e., overshootAmount was non-zero)
+    if (lastPtBeforeFinal.x !== point2.x || lastPtBeforeFinal.y !== point2.y) {
+      path.push({ x: point2.x, y: point2.y })
+    }
+  }
+  // If !p2WillHaveApproachSegment, p2EffectiveTarget is point2, which should be the last point.
 
   return path
 }

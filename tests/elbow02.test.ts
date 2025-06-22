@@ -8,6 +8,7 @@ test("elbow02", () => {
   expect(result).toEqual([
     { x: 0, y: 0 },
     { x: 0, y: 2 },
+    { x: 2.7, y: 2 }, // p2EffectiveTargetX = 3 - 0.3 (default overshoot)
     { x: 3, y: 2 },
   ])
 })
