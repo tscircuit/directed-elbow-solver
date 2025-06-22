@@ -6,6 +6,8 @@ const SVG_WIDTH = 600
 const SVG_HEIGHT = 400
 const POINT_RADIUS = 8
 const ARROW_LENGTH = 20
+const GRID_SIZE = 50
+const OVERSHOOT_AMOUNT = 50
 
 type FacingDirectionOption = ElbowPoint["facingDirection"] | "none"
 
@@ -27,7 +29,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const p1ToUse = { ...point1, facingDirection: point1.facingDirection === "none" ? undefined : point1.facingDirection }
     const p2ToUse = { ...point2, facingDirection: point2.facingDirection === "none" ? undefined : point2.facingDirection }
-    const newPath = calculateElbow(p1ToUse, p2ToUse)
+    const newPath = calculateElbow(p1ToUse, p2ToUse, { overshoot: OVERSHOOT_AMOUNT })
     setPath(newPath)
   }, [point1, point2])
 
@@ -49,8 +51,16 @@ const App: React.FC = () => {
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!draggingPoint || !svgRef.current) return
-    const { x, y } = getSVGCoordinates(event as unknown as React.MouseEvent) // Cast needed for global MouseEvent
+    let { x, y } = getSVGCoordinates(event as unknown as React.MouseEvent) // Cast needed for global MouseEvent
     
+    // Snap to grid
+    x = Math.round(x / GRID_SIZE) * GRID_SIZE
+    y = Math.round(y / GRID_SIZE) * GRID_SIZE
+
+    // Ensure points stay within SVG bounds (optional, but good practice with snapping)
+    x = Math.max(POINT_RADIUS, Math.min(SVG_WIDTH - POINT_RADIUS, x))
+    y = Math.max(POINT_RADIUS, Math.min(SVG_HEIGHT - POINT_RADIUS, y))
+
     const updateFn = draggingPoint === "point1" ? setPoint1 : setPoint2
     updateFn((prevPoint) => ({ ...prevPoint, x, y }))
   }, [draggingPoint])
@@ -134,6 +144,30 @@ const App: React.FC = () => {
         </defs>
         {/* Apply Cartesian coordinate system transform */}
         <g transform={`translate(0, ${SVG_HEIGHT}) scale(1, -1)`}>
+          {/* Grid Lines */}
+          {Array.from({ length: Math.floor(SVG_WIDTH / GRID_SIZE) -1 }).map((_, i) => (
+            <line
+              key={`v-line-${i}`}
+              x1={(i + 1) * GRID_SIZE}
+              y1="0"
+              x2={(i + 1) * GRID_SIZE}
+              y2={SVG_HEIGHT}
+              stroke="#e0e0e0" // Faded gray
+              strokeWidth="1"
+            />
+          ))}
+          {Array.from({ length: Math.floor(SVG_HEIGHT / GRID_SIZE) - 1 }).map((_, i) => (
+            <line
+              key={`h-line-${i}`}
+              x1="0"
+              y1={(i + 1) * GRID_SIZE}
+              x2={SVG_WIDTH}
+              y2={(i + 1) * GRID_SIZE}
+              stroke="#e0e0e0" // Faded gray
+              strokeWidth="1"
+            />
+          ))}
+
           {/* Path */}
           {path.length > 1 && (
             <polyline
@@ -162,6 +196,33 @@ const App: React.FC = () => {
           ))}
         </g>
       </svg>
+
+      <div style={{ marginTop: "20px", width: "100%", maxWidth: `${SVG_WIDTH}px` }}>
+        <label htmlFor="scene-json" style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>Scene JSON:</label>
+        <textarea
+          id="scene-json"
+          readOnly
+          value={JSON.stringify(
+            {
+              point1: { x: point1.x, y: point1.y, facingDirection: point1.facingDirection === "none" ? undefined : point1.facingDirection },
+              point2: { x: point2.x, y: point2.y, facingDirection: point2.facingDirection === "none" ? undefined : point2.facingDirection },
+            },
+            null,
+            2,
+          )}
+          style={{ width: "100%", height: "150px", fontFamily: "monospace", fontSize: "12px" }}
+        />
+      </div>
+
+      <div style={{ marginTop: "20px", width: "100%", maxWidth: `${SVG_WIDTH}px` }}>
+        <label htmlFor="path-output" style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>Elbow Path Output:</label>
+        <textarea
+          id="path-output"
+          readOnly
+          value={JSON.stringify(path, null, 2)}
+          style={{ width: "100%", height: "150px", fontFamily: "monospace", fontSize: "12px" }}
+        />
+      </div>
     </div>
   )
 }
