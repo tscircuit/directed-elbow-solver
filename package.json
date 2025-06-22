@@ -2,7 +2,10 @@
   "name": "directed-elbow-solver",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "scripts": {
+    "start": "bun run site/index.html",
+    "build": "bun build site/index.html"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.0.4",
     "@types/bun": "latest",
