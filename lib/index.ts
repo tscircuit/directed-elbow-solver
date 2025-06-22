@@ -53,7 +53,6 @@ export const calculateElbow = (
     push({ x: midX, y: point2.y })
   } else if (startDir === "y+" && endDir === "x-") {
     push({ x: point1.x, y: point2.y })
-    push({ x: p2Target.x, y: point2.y })
   } else if (startDir === "y-" && endDir === "x-") {
     push({ x: point1.x, y: point1.y - overshootAmount })
     push({ x: midX, y: point1.y - overshootAmount })
@@ -88,6 +87,8 @@ export const calculateElbow = (
     push({ x: point1.x - overshootAmount, y: point1.y })
     push({ x: point1.x - overshootAmount, y: p2Target.y })
     push({ x: point2.x, y: p2Target.y })
+  } else if (startDir === "x+" && endDir === "y-") {
+    push({ x: point2.x, y: point1.y });
   } else {
     // Fallback to a simple midpoint-based path
     if (startDir.startsWith("x")) {
