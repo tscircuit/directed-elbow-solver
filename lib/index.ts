@@ -174,12 +174,13 @@ export const calculateElbow = (
       push({ x: point2.x, y: midY });
     } else { // point1.y < point2.y
       // p1 is below p2. p1 faces y- (down), p2 faces y+ (up).
-      // p1 must first move in its facingDirection (y-), then maneuver.
-      // Path: p1 -> p1_overshoot_y- -> (p2.x, p1_overshoot_y) -> (p2.x, p2_target_y+) -> p2
+      // p1 must first move in its facingDirection (y-), then maneuver using midX.
+      // Path: p1 -> p1_overshoot_y- -> (midX, p1_overshoot_y-) -> (midX, p2_target_y+) -> (p2.x, p2_target_y+) -> p2
       const p1OvershootY = point1.y - overshootAmount;
       push({ x: point1.x, y: p1OvershootY });       // Overshoot along P1's y- direction
-      push({ x: point2.x, y: p1OvershootY });       // Align with P2's x-coordinate
-      push({ x: point2.x, y: p2Target.y });         // Align with P2's target Y (p2.y + overshootAmount for y+ facing)
+      push({ x: midX, y: p1OvershootY });           // Move to midX at p1OvershootY
+      push({ x: midX, y: p2Target.y });             // Move to p2Target.y (p2.y + overshoot) at midX
+      push({ x: point2.x, y: p2Target.y });         // Align with P2's x-coordinate at p2Target.y
     }
   } else {
     // Fallback to a simple midpoint-based path
