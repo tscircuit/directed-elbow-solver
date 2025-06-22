@@ -25,12 +25,25 @@ const App: React.FC = () => {
   const [path, setPath] = useState<Array<{ x: number; y: number }>>([])
   const [draggingPoint, setDraggingPoint] = useState<"point1" | "point2" | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const [sceneJsonInput, setSceneJsonInput] = useState("")
 
   useEffect(() => {
     const p1ToUse = { ...point1, facingDirection: point1.facingDirection === "none" ? undefined : point1.facingDirection }
     const p2ToUse = { ...point2, facingDirection: point2.facingDirection === "none" ? undefined : point2.facingDirection }
     const newPath = calculateElbow(p1ToUse, p2ToUse, { overshoot: OVERSHOOT_AMOUNT })
     setPath(newPath)
+
+    // Update scene JSON input when points change
+    setSceneJsonInput(
+      JSON.stringify(
+        {
+          point1: { x: point1.x, y: point1.y, facingDirection: point1.facingDirection === "none" ? undefined : point1.facingDirection },
+          point2: { x: point2.x, y: point2.y, facingDirection: point2.facingDirection === "none" ? undefined : point2.facingDirection },
+        },
+        null,
+        2,
+      ),
+    )
   }, [point1, point2])
 
   const getSVGCoordinates = (event: React.MouseEvent): { x: number; y: number } => {
@@ -93,6 +106,50 @@ const App: React.FC = () => {
       ...prevPoint,
       facingDirection: direction === "none" ? undefined : direction,
     }))
+  }
+
+  const handleLoadScene = () => {
+    try {
+      const parsedScene = JSON.parse(sceneJsonInput)
+      if (
+        parsedScene &&
+        parsedScene.point1 &&
+        typeof parsedScene.point1.x === "number" &&
+        typeof parsedScene.point1.y === "number" &&
+        parsedScene.point2 &&
+        typeof parsedScene.point2.x === "number" &&
+        typeof parsedScene.point2.y === "number"
+      ) {
+        const newPoint1: ElbowPoint = {
+          x: parsedScene.point1.x,
+          y: parsedScene.point1.y,
+          facingDirection: parsedScene.point1.facingDirection || undefined,
+        }
+        const newPoint2: ElbowPoint = {
+          x: parsedScene.point2.x,
+          y: parsedScene.point2.y,
+          facingDirection: parsedScene.point2.facingDirection || undefined,
+        }
+
+        // Basic validation for facingDirection if present
+        const validDirections: Array<ElbowPoint["facingDirection"] | undefined> = ["x+", "x-", "y+", "y-", undefined]
+        if (!validDirections.includes(newPoint1.facingDirection)) {
+            alert("Invalid facingDirection for point1. Allowed values: x+, x-, y+, y- or empty.")
+            return
+        }
+        if (!validDirections.includes(newPoint2.facingDirection)) {
+            alert("Invalid facingDirection for point2. Allowed values: x+, x-, y+, y- or empty.")
+            return
+        }
+
+        setPoint1(newPoint1)
+        setPoint2(newPoint2)
+      } else {
+        alert("Invalid JSON structure. Expected { point1: {x, y, facingDirection?}, point2: {x, y, facingDirection?} }")
+      }
+    } catch (error) {
+      alert("Error parsing JSON: " + (error as Error).message)
+    }
   }
 
   const renderArrow = (point: ElbowPoint) => {
@@ -198,19 +255,15 @@ const App: React.FC = () => {
       </svg>
 
       <div style={{ marginTop: "20px", width: "100%", maxWidth: `${SVG_WIDTH}px` }}>
-        <label htmlFor="scene-json" style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>Scene JSON:</label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+          <label htmlFor="scene-json" style={{ fontWeight: "bold" }}>Scene JSON:</label>
+          <button onClick={handleLoadScene} style={{ padding: "3px 8px" }}>Load</button>
+        </div>
         <textarea
           id="scene-json"
-          readOnly
-          value={JSON.stringify(
-            {
-              point1: { x: point1.x, y: point1.y, facingDirection: point1.facingDirection === "none" ? undefined : point1.facingDirection },
-              point2: { x: point2.x, y: point2.y, facingDirection: point2.facingDirection === "none" ? undefined : point2.facingDirection },
-            },
-            null,
-            2,
-          )}
-          style={{ width: "100%", height: "150px", fontFamily: "monospace", fontSize: "12px" }}
+          value={sceneJsonInput}
+          onChange={(e) => setSceneJsonInput(e.target.value)}
+          style={{ width: "100%", height: "150px", fontFamily: "monospace", fontSize: "12px", boxSizing: "border-box" }}
         />
       </div>
 
