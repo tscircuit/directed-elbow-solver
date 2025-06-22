@@ -127,15 +127,27 @@ export const calculateElbow = (
         path.push({ x: currX, y: p2EffectiveTargetY });
       }
     } else if (p1Axis === "x" && p2Axis === "x") { // Both X-directed
-      const yIntermediate = point2.y - Math.sign(point2.y - point1.y) * overshootAmount
-      path.push({ x: midXOriginal, y: currY })
-      path.push({ x: midXOriginal, y: yIntermediate })
-      path.push({ x: p2EffectiveTargetX, y: yIntermediate })
+      if (p1Dir === p2Dir) { // Same direction: "two-turn" shape
+        path.push({ x: p2EffectiveTargetX, y: currY });
+        // The next point (p2EffectiveTargetX, p2EffectiveTargetY)
+        // will be added by the finalization logic if currY !== p2EffectiveTargetY.
+      } else { // Opposite directions: S-shape
+        const yIntermediate = point2.y - Math.sign(point2.y - point1.y) * overshootAmount;
+        path.push({ x: midXOriginal, y: currY });
+        path.push({ x: midXOriginal, y: yIntermediate });
+        path.push({ x: p2EffectiveTargetX, y: yIntermediate });
+      }
     } else if (p1Axis === "y" && p2Axis === "y") { // Both Y-directed (elbow05 case)
-      const xIntermediate = point2.x - Math.sign(point2.x - point1.x) * overshootAmount
-      path.push({ x: currX, y: midYOriginal })
-      path.push({ x: xIntermediate, y: midYOriginal })
-      path.push({ x: xIntermediate, y: p2EffectiveTargetY })
+      if (p1Dir === p2Dir) { // Same direction: "two-turn" shape
+        path.push({ x: currX, y: p2EffectiveTargetY });
+        // The next point (p2EffectiveTargetX, p2EffectiveTargetY)
+        // will be added by the finalization logic if currX !== p2EffectiveTargetX.
+      } else { // Opposite directions: S-shape
+        const xIntermediate = point2.x - Math.sign(point2.x - point1.x) * overshootAmount;
+        path.push({ x: currX, y: midYOriginal });
+        path.push({ x: xIntermediate, y: midYOriginal });
+        path.push({ x: xIntermediate, y: p2EffectiveTargetY });
+      }
     } else if ( // Default HVH U-shape
       (p1Axis === "x" && !p2Axis) ||
       (!p1Axis && p2Axis === "x") ||

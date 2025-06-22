@@ -9,10 +9,8 @@ test("elbow04", () => {
   })
   expect(result).toEqual([
     { x: 0, y: 0 },
-    { x: 0, y: 2.5 },
-    { x: 2, y: 2.5 },
-    { x: 2, y: 6 },
-    { x: 3, y: 6 },
-    { x: 3, y: 5 },
+    { x: 0, y: 6 }, // Move along p1's axis (y) to p2's effective target y
+    { x: 3, y: 6 }, // Turn and move to p2's effective target x
+    { x: 3, y: 5 }, // Final approach to p2
   ])
 })
