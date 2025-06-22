@@ -110,7 +110,11 @@ const App: React.FC = () => {
 
   const handleLoadScene = () => {
     try {
-      const parsedScene = JSON.parse(sceneJsonInput)
+      // IMPORTANT: Using eval can be a security risk if the input is from an untrusted source.
+      // Here, we assume the user is pasting their own, known object literals.
+      // Wrap with parentheses to ensure it's evaluated as an expression.
+      const parsedScene = eval(`(${sceneJsonInput})`)
+
       if (
         parsedScene &&
         parsedScene.point1 &&
