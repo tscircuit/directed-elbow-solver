@@ -4,6 +4,8 @@ A TypeScript library that computes "elbow" paths between two points. Each point 
 
 [View Online Demo](https://calculate-elbow.vercel.app/)
 
+![image](https://github.com/user-attachments/assets/c18c3f71-1277-41fa-a95b-38c228b890e1)
+
 ## Installation
 
 ```bash
