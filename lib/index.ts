@@ -85,18 +85,28 @@ export const calculateElbow = (
     push({ x: point1.x, y: commonY })
     push({ x: point2.x, y: commonY })
   } else if (startDir === "y-" && endDir === "x+") {
-    const p1OvershotY = point1.y - overshootAmount
-    push({ x: point1.x, y: p1OvershotY }) // P1 overshoots in y-
-    push({ x: p2Target.x, y: p1OvershotY }) // Align with P2's target X, maintaining P1's overshot Y
-    push({ x: p2Target.x, y: point2.y }) // Move to P2's actual Y, maintaining P2's target X
+    if (point1.x > point2.x && point1.y >= point2.y) {
+      // Simple vertical-then-horizontal “L” (case elbow26)
+      push({ x: point1.x, y: point2.y })
+      push({ x: point2.x, y: point2.y })
+    } else {
+      // existing overshoot / U-turn fallback
+      const p1OvershotY = point1.y - overshootAmount
+      push({ x: point1.x, y: p1OvershotY })
+      push({ x: p2Target.x, y: p1OvershotY })
+      push({ x: p2Target.x, y: point2.y })
+    }
   } else if (startDir === "y+" && endDir === "x+") {
     const p1OvershootY = point1.y + overshootAmount
     push({ x: point1.x, y: p1OvershootY }) // Move along P1's facing direction
     push({ x: p2Target.x, y: p1OvershootY }) // Move horizontally to P2's target X
     push({ x: p2Target.x, y: point2.y }) // Move vertically to P2's actual Y
   } else if (startDir === "x+" && endDir === "y+") {
-    // p1(x,y,x+), p2(x',y',y+). p2 expects approach from y > y' (y- segment).
-    if (point1.x < point2.x && point1.y > point2.y) {
+    if (point1.x > point2.x && point1.y < point2.y) {
+      // Simple vertical-then-horizontal “L” (case elbow27)
+      push({ x: point1.x, y: point2.y })
+      push({ x: point2.x, y: point2.y })
+    } else if (point1.x < point2.x && point1.y > point2.y) {
       // Case like elbow15: simple L-bend
       // Path: (p1.x,p1.y) -> (p2.x,p1.y) -> (p2.x,p2.y)
       // First segment (p1.x,p1.y)->(p2.x,p1.y) is x+ (since p1.x < p2.x).
