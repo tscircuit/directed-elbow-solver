@@ -59,10 +59,19 @@ export const calculateElbow = (
     push({ x: midX, y: point2.y })
     push({ x: p2Target.x, y: point2.y })
   } else if (startDir === "x-" && endDir === "x+") {
-    push({ x: point1.x - overshootAmount, y: point1.y })
-    push({ x: point1.x - overshootAmount, y: midY })
-    push({ x: p2Target.x, y: midY })
-    push({ x: p2Target.x, y: point2.y })
+    if (point1.x > point2.x) {
+      //  p1 is right of p2  →  symmetrical “Z” path through the midpoint
+      push({ x: midX, y: point1.y })   // horizontal segment, still in p1’s x- direction
+      push({ x: midX, y: point2.y })   // vertical segment down/up to p2’s y
+      // final horizontal segment into p2 is produced by the common
+      //   push({ x: point2.x, y: point2.y })  at the end of the function
+    } else {
+      // original overshoot solution for the p1-left-of-p2 case
+      push({ x: point1.x - overshootAmount, y: point1.y })
+      push({ x: point1.x - overshootAmount, y: midY })
+      push({ x: p2Target.x, y: midY })
+      push({ x: p2Target.x, y: point2.y })
+    }
   } else if (startDir === "y+" && endDir === "y+") {
     const commonY = Math.max(point1.y + overshootAmount, p2Target.y)
     push({ x: point1.x, y: commonY })
