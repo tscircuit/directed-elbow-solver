@@ -54,10 +54,18 @@ export const calculateElbow = (
   } else if (startDir === "y+" && endDir === "x-") {
     push({ x: point1.x, y: point2.y })
   } else if (startDir === "y-" && endDir === "x-") {
-    push({ x: point1.x, y: point1.y - overshootAmount })
-    push({ x: midX, y: point1.y - overshootAmount })
-    push({ x: midX, y: point2.y })
-    push({ x: p2Target.x, y: point2.y })
+    if (point1.y >= point2.y) {
+      // p1 is above (or level with) p2 → simple “L” path:
+      // (p1.x,p1.y) → (p1.x,p2.y) → (p2.x,p2.y)
+      push({ x: point1.x, y: point2.y })
+    } else {
+      // fallback: original overshoot / U-turn strategy
+      const p1OvershootY = point1.y - overshootAmount
+      push({ x: point1.x, y: p1OvershootY })
+      push({ x: midX, y: p1OvershootY })
+      push({ x: midX, y: point2.y })
+      push({ x: p2Target.x, y: point2.y })
+    }
   } else if (startDir === "x-" && endDir === "x+") {
     if (point1.x > point2.x) {
       //  p1 is right of p2  →  symmetrical “Z” path through the midpoint
