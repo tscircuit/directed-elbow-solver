@@ -56,11 +56,11 @@ export const calculateElbow = (
   let swap = false, refl = false
 
   switch (startDirRaw) {
-    case "x+"   : break
-    case "x-"   : refl = true; break
-    case "y+"   : swap = true; break
-    case "y-"   : swap = true; refl = true; break
-    case "none" : break
+    case "x+"   : console.log("startDirRaw: x+"); break
+    case "x-"   : console.log("startDirRaw: x-, setting refl=true"); refl = true; break
+    case "y+"   : console.log("startDirRaw: y+, setting swap=true"); swap = true; break
+    case "y-"   : console.log("startDirRaw: y-, setting swap=true, refl=true"); swap = true; refl = true; break
+    case "none" : console.log("startDirRaw: none"); break
   }
 
   const p1 = applyTransform(point1, swap, refl)
@@ -69,11 +69,13 @@ export const calculateElbow = (
 
   // --- compute p2's effective (overshot) target in canonical space ---
   const p2Target: Pt = { ...p2 }
+  console.log("Initial p2Target:", JSON.stringify(p2Target), "endDir:", endDir, "overshootAmount:", overshootAmount);
   switch (endDir) {
-    case "x+" : p2Target.x += overshootAmount; break
-    case "x-" : p2Target.x -= overshootAmount; break
-    case "y+" : p2Target.y += overshootAmount; break
-    case "y-" : p2Target.y -= overshootAmount; break
+    case "x+" : p2Target.x += overshootAmount; console.log("endDir: x+, p2Target.x updated to:", p2Target.x); break
+    case "x-" : p2Target.x -= overshootAmount; console.log("endDir: x-, p2Target.x updated to:", p2Target.x); break
+    case "y+" : p2Target.y += overshootAmount; console.log("endDir: y+, p2Target.y updated to:", p2Target.y); break
+    case "y-" : p2Target.y -= overshootAmount; console.log("endDir: y-, p2Target.y updated to:", p2Target.y); break
+    default: console.log("endDir: none or unhandled case"); break;
   }
 
   // --- build path in canonical space ---
@@ -81,12 +83,19 @@ export const calculateElbow = (
 
   if (p2Target.x >= p1.x) {
     // simple L-bend :  H ➜ V
+    console.log("Path type: simple L-bend (p2Target.x >= p1.x)");
     canonical.push({ x: p2Target.x, y: p1.y })
   } else {
     // need to detour right first (H-V-H)
+    // need to detour right first (H-V-H-V)
+    console.log("Path type: detour (p2Target.x < p1.x)");
     const midX = p1.x + overshootAmount
-    canonical.push({ x: midX, y: p1.y })
-    canonical.push({ x: midX, y: p2Target.y })
+    const newY = (p1.y + p2Target.y) / 2
+    console.log(`Detour intermediate turn: midX=${midX}, newY=${newY} (p1.y=${p1.y}, p2Target.y=${p2Target.y})`);
+
+    canonical.push({ x: midX, y: p1.y })        // Point after 1st H segment
+    canonical.push({ x: midX, y: newY })        // Point after 1st V segment
+    canonical.push({ x: p2Target.x, y: newY })  // Point after 2nd H segment
   }
   canonical.push({ x: p2Target.x, y: p2Target.y })
   canonical.push({ x: p2.x,        y: p2.y        })
