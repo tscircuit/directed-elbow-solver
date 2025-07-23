@@ -44,7 +44,7 @@ export const calculateElbow = (
   const endDir = point2.facingDirection ?? "none"
 
   const push = (pt: { x: number; y: number }) => {
-    const last = result[result.length - 1]
+    const last = result[result.length - 1]!
     if (last.x !== pt.x || last.y !== pt.y) result.push(pt)
   }
 
@@ -69,8 +69,8 @@ export const calculateElbow = (
   } else if (startDir === "x-" && endDir === "x+") {
     if (point1.x > point2.x) {
       //  p1 is right of p2  →  symmetrical “Z” path through the midpoint
-      push({ x: midX, y: point1.y })   // horizontal segment, still in p1’s x- direction
-      push({ x: midX, y: point2.y })   // vertical segment down/up to p2’s y
+      push({ x: midX, y: point1.y }) // horizontal segment, still in p1’s x- direction
+      push({ x: midX, y: point2.y }) // vertical segment down/up to p2’s y
       // final horizontal segment into p2 is produced by the common
       //   push({ x: point2.x, y: point2.y })  at the end of the function
     } else {
@@ -105,9 +105,9 @@ export const calculateElbow = (
     } else {
       // Existing overshoot / U-turn strategy
       const p1OvershootY = point1.y + overshootAmount
-      push({ x: point1.x, y: p1OvershootY })     // move along P1’s y+ direction
-      push({ x: p2Target.x, y: p1OvershootY })   // horizontal to P2’s overshoot X
-      push({ x: p2Target.x, y: point2.y })       // vertical into P2’s Y
+      push({ x: point1.x, y: p1OvershootY }) // move along P1’s y+ direction
+      push({ x: p2Target.x, y: p1OvershootY }) // horizontal to P2’s overshoot X
+      push({ x: p2Target.x, y: point2.y }) // vertical into P2’s Y
     }
   } else if (startDir === "x+" && endDir === "y+") {
     if (point1.x > point2.x && point1.y < point2.y) {
@@ -189,9 +189,9 @@ export const calculateElbow = (
     } else {
       // Overshoot / U-turn fallback (existing behaviour)
       const p1OvershotX = point1.x - overshootAmount
-      push({ x: p1OvershotX, y: point1.y })       // overshoot along x-
-      push({ x: p1OvershotX, y: p2Target.y })     // drop/raise to p2Target.y
-      push({ x: p2Target.x, y: p2Target.y })      // move to p2Target.x at that Y
+      push({ x: p1OvershotX, y: point1.y }) // overshoot along x-
+      push({ x: p1OvershotX, y: p2Target.y }) // drop/raise to p2Target.y
+      push({ x: p2Target.x, y: p2Target.y }) // move to p2Target.x at that Y
     }
   } else if (startDir === "x+" && endDir === "y-") {
     // p1(x,y,x+), p2(x',y',y-). p2 expects approach from y < y' (y+ segment).
