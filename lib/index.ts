@@ -159,21 +159,25 @@ export const calculateElbow = (
     push({ x: commonX, y: point1.y })
     push({ x: commonX, y: point2.y })
   } else if (startDir === "x-" && endDir === "y+") {
-    // If point1 is facing "x-" and point2.x is to the left of point1.x,
-    // a direct L-bend is possible and preferred.
-    if (point1.x > point2.x) {
+    // When point1 faces left (x-) and point2 expects an approach from below (y+)
+    // we can sometimes take a simple L bend. Otherwise, use an overshoot/U-turn
+    // similar to the logic for the mirrored x+ → y+ case.
+    if (point1.x > point2.x && point1.y > point2.y) {
+      // p1 is right of and below p2 → direct L-bend preferred
       // Path: (p1.x,p1.y) -> (p2.x,p1.y) -> (p2.x,p2.y)
-      // First segment (p1.x,p1.y) -> (p2.x,p1.y) is "x-", matches startDir.
-      // Second segment (p2.x,p1.y) -> (p2.x,p2.y) would be "y-" if p1.y > p2.y (as in elbow14)
-      // or "y+" if p1.y < p2.y.
-      // If the segment is "y-", this is consistent with endDir="y+" (meaning the path,
-      // if it were to continue straight *through* point2, would go in the "y+" direction).
       push({ x: point2.x, y: point1.y })
+    } else if (point1.x > point2.x && point1.y < point2.y) {
+      // p1 is right of and above p2. Mirror of elbow08: overshoot then approach
+      const p1OvershootX = point1.x - overshootAmount
+      push({ x: p1OvershootX, y: point1.y })
+      push({ x: p1OvershootX, y: p2Target.y })
+      push({ x: point2.x, y: p2Target.y })
     } else {
-      // point1.x <= point2.x. point1 facing "x-" must overshoot away from point2.x.
-      // This handles cases like elbow10.
-      push({ x: point1.x - overshootAmount, y: point1.y })
-      push({ x: point1.x - overshootAmount, y: p2Target.y })
+      // point1.x <= point2.x. p1 must move further left before turning
+      // Handles cases like elbow10.
+      const p1OvershootX = point1.x - overshootAmount
+      push({ x: p1OvershootX, y: point1.y })
+      push({ x: p1OvershootX, y: p2Target.y })
       push({ x: point2.x, y: p2Target.y })
     }
   } else if (startDir === "x-" && endDir === "y-") {
