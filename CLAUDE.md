@@ -31,3 +31,38 @@ bun test elbow01.test.ts   # Run a specific test
 - Library exports single function with options pattern for extensibility
 
 The overshoot parameter allows the algorithm to extend beyond the direct path when facing directions require it, useful for avoiding obstacles or creating more natural routing paths.
+
+## Tests
+
+Tests should all have the general form:
+
+```ts
+import { test, expect } from "bun:test"
+import { calculateElbow } from "lib/index"
+
+const scene = {
+  point1: {
+    x: 500,
+    y: 200,
+    facingDirection: "y+",
+  },
+  point2: {
+    x: 250,
+    y: 150,
+    facingDirection: "x+",
+  },
+} as const
+
+test("elbow##", () => {
+  const result = calculateElbow(scene.point1, scene.point2, {
+    overshoot: 50,
+  })
+  expect(result).toEqual([
+    { x: 500, y: 200 },
+    { x: 500, y: 250 },
+    { x: 375, y: 250 },
+    { x: 375, y: 150 },
+    { x: 250, y: 150 },
+  ])
+})
+```
