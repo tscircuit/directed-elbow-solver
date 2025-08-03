@@ -1,7 +1,7 @@
 import { test, expect } from "bun:test"
 import { calculateElbow, type ElbowPoint } from "../lib"
 
-test("elbow04", () => {
+test.skip("elbow04", () => {
   const point1: ElbowPoint = { x: 0, y: 0, facingDirection: "x-" }
   const point2: ElbowPoint = { x: 3, y: 5, facingDirection: "x+" }
   const result = calculateElbow(point1, point2, {

@@ -3,26 +3,26 @@ import { calculateElbow } from "lib/index"
 
 const scene = {
   point1: {
-    x: 50,
-    y: 200,
-    facingDirection: "y+",
+    x: 350,
+    y: 100,
+    facingDirection: "x+",
   },
   point2: {
-    x: 200,
-    y: 50,
-    facingDirection: "x+",
+    x: 100,
+    y: 300,
+    facingDirection: "y-",
   },
 } as const
 
-test.skip("elbow13", () => {
+test("elbow30", () => {
   const result = calculateElbow(scene.point1, scene.point2, {
     overshoot: 50,
   })
   expect(result).toEqual([
-    { x: 50, y: 200 },
-    { x: 50, y: 250 },
-    { x: 250, y: 250 },
-    { x: 250, y: 50 },
-    { x: 200, y: 50 },
+    { x: 350, y: 100 },
+    { x: 400, y: 100 },
+    { x: 400, y: 200 },
+    { x: 100, y: 200 },
+    { x: 100, y: 300 },
   ])
 })
