@@ -105,6 +105,15 @@ export const calculateElbowBends = (
         push({ x: p1OvershootX, y: p1.y })
         push({ x: p1OvershootX, y: midY })
         push({ x: p2.x, y: midY })
+      // Symmetric case: the start is to the right of the end *and* below it.
+      // We overshoot horizontally from the start and then route vertically
+      // straight to the Y-overshoot of the end point – mirroring the logic
+      // above but for the lower-right quadrant.
+      } else if (p1.x > p2.x && p1.y > p2.y) {
+        const p1OvershootX = p1.x + overshootAmount
+        push({ x: p1OvershootX, y: p1.y })
+        push({ x: p1OvershootX, y: p2Target.y })
+        push({ x: p2.x, y: p2Target.y })
       } else {
         // Default fallback: route via the horizontal mid-point between the
         // two X coordinates and the Y-overshoot of the end point.
