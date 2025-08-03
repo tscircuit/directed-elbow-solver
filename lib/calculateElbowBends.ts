@@ -10,7 +10,7 @@ export interface ElbowPoint {
  * that restriction in a dedicated type so the compiler can keep us honest.
  */
 export type NormalisedStartPoint = Omit<ElbowPoint, "facingDirection"> & {
-  facingDirection?: "x+" | "y+"
+  facingDirection?: "x+"
 }
 
 /**
@@ -62,27 +62,6 @@ export const calculateElbowBends = (
   if (startDir === "none" && endDir === "none") {
     push({ x: midX, y: p1.y })
     push({ x: midX, y: p2.y })
-  } else if (startDir === "y+" && endDir === "x-") {
-    push({ x: p1.x, y: p2.y })
-  } else if (startDir === "y+" && endDir === "y+") {
-    const commonY = Math.max(p1.y + overshootAmount, p2Target.y)
-    push({ x: p1.x, y: commonY })
-    push({ x: p2.x, y: commonY })
-  } else if (startDir === "y+" && endDir === "x+") {
-    if (p1.x > p2.x && p1.y < p2.y) {
-      push({ x: p1.x, y: p2.y })
-      push({ x: p2.x, y: p2.y })
-    } else {
-      const p1OvershootY = p1.y + overshootAmount
-      push({ x: p1.x, y: p1OvershootY })
-      if (p1.x > p2.x && p1.y >= p2.y) {
-        push({ x: midX, y: p1OvershootY })
-        push({ x: midX, y: p2.y })
-      } else {
-        push({ x: p2Target.x, y: p1OvershootY })
-        push({ x: p2Target.x, y: p2.y })
-      }
-    }
   } else if (startDir === "x+" && endDir === "y+") {
     if (p1.x > p2.x && p1.y < p2.y) {
       push({ x: p1.x, y: p2.y })
@@ -121,28 +100,9 @@ export const calculateElbowBends = (
       push({ x: p1.x + overshootAmount, y: p2Target.y })
       push({ x: p2.x, y: p2Target.y })
     }
-  } else if (startDir === "y+" && endDir === "y-") {
-    if (p1.y <= p2.y) {
-      push({ x: p1.x, y: midY })
-      push({ x: p2.x, y: midY })
-    } else {
-      const p1OvershootY = p1.y + overshootAmount
-      push({ x: p1.x, y: p1OvershootY })
-      push({ x: midX, y: p1OvershootY })
-      push({ x: midX, y: p2Target.y })
-      push({ x: p2.x, y: p2Target.y })
-    }
   } else {
-    if (startDir.startsWith("x")) {
-      push({
-        x: p1.x + (startDir === "x+" ? overshootAmount : -overshootAmount),
-        y: p1.y,
-      })
-    } else if (startDir.startsWith("y")) {
-      push({
-        x: p1.x,
-        y: p1.y + (startDir === "y+" ? overshootAmount : -overshootAmount),
-      })
+    if (startDir === "x+") {
+      push({ x: p1.x + overshootAmount, y: p1.y })
     }
     push({ x: midX, y: result[result.length - 1]!.y })
     push({ x: midX, y: p2Target.y })
