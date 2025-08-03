@@ -47,19 +47,69 @@ export const calculateElbow = (
     return { x, y, facingDirection: facing }
   }
 
+  // Rotate a point 90° clockwise around the centre and adjust facingDirection
+  const rotateCW = (pt: ElbowPoint, centre: ElbowPoint): ElbowPoint => {
+    const dx = pt.x - centre.x
+    const dy = pt.y - centre.y
+    const x = centre.x + dy
+    const y = centre.y - dx
+
+    let facing = pt.facingDirection
+    switch (facing) {
+      case "x+":
+        facing = "y-"
+        break
+      case "y-":
+        facing = "x-"
+        break
+      case "x-":
+        facing = "y+"
+        break
+      case "y+":
+        facing = "x+"
+        break
+    }
+
+    return { x, y, facingDirection: facing }
+  }
+
+  // Rotate a point 90° counter-clockwise around the centre (no facingDirection)
+  const rotateCCW = (
+    pt: { x: number; y: number },
+    centre: { x: number; y: number },
+  ): { x: number; y: number } => {
+    const dx = pt.x - centre.x
+    const dy = pt.y - centre.y
+    return { x: centre.x - dy, y: centre.y + dx }
+  }
+
   const mp1 = mirrorX || mirrorY ? mirrorPoint(p1) : p1
   const mp2 = mirrorX || mirrorY ? mirrorPoint(p2) : p2
+
+  // Rotate 90° clockwise around mp1 if it is facing "y+" so that it faces "x+"
+  let rp1: ElbowPoint = mp1
+  let rp2: ElbowPoint = mp2
+  let rotated = false
+  if (mp1.facingDirection === "y+") {
+    rotated = true
+    rp1 = { ...mp1, facingDirection: "x+" }
+    rp2 = rotateCW(mp2, mp1)
+  }
 
   const overshootAmount =
     options?.overshoot ??
     0.1 *
-      Math.max(Math.abs(mp1.x - mp2.x), Math.abs(mp1.y - mp2.y))
+      Math.max(Math.abs(rp1.x - rp2.x), Math.abs(rp1.y - rp2.y))
 
   let result = calculateElbowBends(
-    mp1 as NormalisedStartPoint,
-    mp2,
+    rp1 as NormalisedStartPoint,
+    rp2,
     overshootAmount,
   )
+
+  if (rotated) {
+    result = result.map((pt) => rotateCCW(pt, rp1))
+  }
 
   if (mirrorX || mirrorY) {
     result = result.map(({ x, y }) => ({
