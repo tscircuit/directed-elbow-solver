@@ -22,6 +22,7 @@ const App: React.FC = () => {
     y: 200,
     facingDirection: "y-",
   })
+  const [bias, setBias] = useState(0.5)
   const [calculatedElbowPath, setCalculatedElbowPath] = useState<
     Array<{ x: number; y: number }>
   >([])
@@ -44,6 +45,7 @@ const App: React.FC = () => {
     const p2ToUse = { ...point2 }
     const newCalculatedPath = calculateElbow(p1ToUse, p2ToUse, {
       overshoot: OVERSHOOT_AMOUNT,
+      bias,
     })
     setCalculatedElbowPath(newCalculatedPath)
 
@@ -66,7 +68,7 @@ const App: React.FC = () => {
         2,
       ),
     )
-  }, [point1, point2])
+  }, [point1, point2, bias])
 
   // Determine the path to display in SVG and to use for the output textarea
   const finalDisplayPath = userLoadedPath || calculatedElbowPath
@@ -308,6 +310,18 @@ const App: React.FC = () => {
               </option>
             ))}
           </select>
+        </div>
+        <div className="control-group">
+          <label htmlFor="bias-slider">Midline Bias: {bias.toFixed(2)}</label>
+          <input
+            id="bias-slider"
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={bias}
+            onChange={(e) => setBias(parseFloat(e.target.value))}
+          />
         </div>
       </div>
 

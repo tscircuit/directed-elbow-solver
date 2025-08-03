@@ -15,6 +15,11 @@ export const calculateElbow = (
      * beyond "out" before turning
      */
     overshoot?: number
+    /**
+     * Bias for the midline calculation. 0 biases toward point1, 1 toward
+     * point2.
+     */
+    bias?: number
   } = {},
 ): Array<{ x: number; y: number }> => {
   let p1 = point1
@@ -98,13 +103,15 @@ export const calculateElbow = (
 
   const overshootAmount =
     options?.overshoot ??
-    0.1 *
-      Math.max(Math.abs(rp1.x - rp2.x), Math.abs(rp1.y - rp2.y))
+    0.1 * Math.max(Math.abs(rp1.x - rp2.x), Math.abs(rp1.y - rp2.y))
+
+  const bias = Math.max(0, Math.min(1, options?.bias ?? 0.5))
 
   let result = calculateElbowBends(
     rp1 as NormalisedStartPoint,
     rp2,
     overshootAmount,
+    bias,
   )
 
   if (rotated) {
