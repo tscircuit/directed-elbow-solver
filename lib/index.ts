@@ -103,11 +103,18 @@ export const calculateElbow = (
       push({ x: point1.x, y: point2.y })
       push({ x: point2.x, y: point2.y })
     } else {
-      // Existing overshoot / U-turn strategy
       const p1OvershootY = point1.y + overshootAmount
-      push({ x: point1.x, y: p1OvershootY }) // move along P1’s y+ direction
-      push({ x: p2Target.x, y: p1OvershootY }) // horizontal to P2’s overshoot X
-      push({ x: p2Target.x, y: point2.y }) // vertical into P2’s Y
+      push({ x: point1.x, y: p1OvershootY })
+      if (point1.x > point2.x && point1.y >= point2.y) {
+        // p1 is to the right of p2; route through the midpoint to
+        // approach p2 from its x+ side without overshooting past it
+        push({ x: midX, y: p1OvershootY })
+        push({ x: midX, y: point2.y })
+      } else {
+        // Existing overshoot / U-turn strategy
+        push({ x: p2Target.x, y: p1OvershootY })
+        push({ x: p2Target.x, y: point2.y })
+      }
     }
   } else if (startDir === "x+" && endDir === "y+") {
     if (point1.x > point2.x && point1.y < point2.y) {
