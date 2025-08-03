@@ -96,8 +96,11 @@ export const calculateElbowBends = (
     } else if (p1.x < p2.x && p1.y < p2.y) {
       push({ x: p2.x, y: p1.y })
     } else {
-      push({ x: p1.x + overshootAmount, y: p1.y })
-      push({ x: p1.x + overshootAmount, y: p2Target.y })
+      // Route via the horizontal mid-point between the two X coordinates
+      // instead of continuing to overshoot. This removes the extra detour
+      // that was giving us a Y-offset of +overshoot in the final path.
+      push({ x: midX, y: p1.y })
+      push({ x: midX, y: p2Target.y })
       push({ x: p2.x, y: p2Target.y })
     }
   } else {
