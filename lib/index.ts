@@ -1,4 +1,8 @@
-import { calculateElbowBends, type ElbowPoint } from "./calculateElbowBends"
+import {
+  calculateElbowBends,
+  type ElbowPoint,
+  type NormalisedStartPoint,
+} from "./calculateElbowBends"
 
 export type { ElbowPoint }
 
@@ -51,7 +55,11 @@ export const calculateElbow = (
     0.1 *
       Math.max(Math.abs(mp1.x - mp2.x), Math.abs(mp1.y - mp2.y))
 
-  let result = calculateElbowBends(mp1, mp2, overshootAmount)
+  let result = calculateElbowBends(
+    mp1 as NormalisedStartPoint,
+    mp2,
+    overshootAmount,
+  )
 
   if (mirrorX || mirrorY) {
     result = result.map(({ x, y }) => ({

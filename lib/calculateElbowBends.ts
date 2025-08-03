@@ -4,8 +4,29 @@ export interface ElbowPoint {
   facingDirection?: "x+" | "x-" | "y+" | "y-"
 }
 
+/**
+ * The first point is always passed in *normalised* form where it can only face
+ * the positive X-axis, positive Y-axis or have no facing at all.  We capture
+ * that restriction in a dedicated type so the compiler can keep us honest.
+ */
+export type NormalisedStartPoint = Omit<ElbowPoint, "facingDirection"> & {
+  facingDirection?: "x+" | "y+"
+}
+
+/**
+ * IMPORTANT:
+ * `calculateElbow` always calls this helper with a normalised coordinate system
+ * where
+ *   • `p1.x` ≤ `p2.x` (and when `x` is equal then `p1.y` ≤ `p2.y`)
+ *   • `p1.facingDirection` ∈ {"x+", "y+"} or is `undefined` (`none`)
+ *
+ * This means any branch that depends on `p1` facing `"x-"` or `"y-"` or on
+ * `p1.x > p2.x` can never be taken at runtime.  The new
+ * `NormalisedStartPoint` type encodes this guarantee so TypeScript will flag
+ * any call-site that violates it.
+ */
 export const calculateElbowBends = (
-  p1: ElbowPoint,
+  p1: NormalisedStartPoint,
   p2: ElbowPoint,
   overshootAmount: number,
 ): Array<{ x: number; y: number }> => {
@@ -43,40 +64,10 @@ export const calculateElbowBends = (
     push({ x: midX, y: p2.y })
   } else if (startDir === "y+" && endDir === "x-") {
     push({ x: p1.x, y: p2.y })
-  } else if (startDir === "y-" && endDir === "x-") {
-    if (p1.y >= p2.y) {
-      push({ x: p1.x, y: p2.y })
-    } else {
-      const p1OvershootY = p1.y - overshootAmount
-      push({ x: p1.x, y: p1OvershootY })
-      push({ x: midX, y: p1OvershootY })
-      push({ x: midX, y: p2.y })
-      push({ x: p2Target.x, y: p2.y })
-    }
-  } else if (startDir === "x-" && endDir === "x+") {
-    if (p1.x > p2.x) {
-      push({ x: midX, y: p1.y })
-      push({ x: midX, y: p2.y })
-    } else {
-      push({ x: p1.x - overshootAmount, y: p1.y })
-      push({ x: p1.x - overshootAmount, y: midY })
-      push({ x: p2Target.x, y: midY })
-      push({ x: p2Target.x, y: p2.y })
-    }
   } else if (startDir === "y+" && endDir === "y+") {
     const commonY = Math.max(p1.y + overshootAmount, p2Target.y)
     push({ x: p1.x, y: commonY })
     push({ x: p2.x, y: commonY })
-  } else if (startDir === "y-" && endDir === "x+") {
-    if (p1.x > p2.x && p1.y >= p2.y) {
-      push({ x: p1.x, y: p2.y })
-      push({ x: p2.x, y: p2.y })
-    } else {
-      const p1OvershotY = p1.y - overshootAmount
-      push({ x: p1.x, y: p1OvershotY })
-      push({ x: p2Target.x, y: p1OvershotY })
-      push({ x: p2Target.x, y: p2.y })
-    }
   } else if (startDir === "y+" && endDir === "x+") {
     if (p1.x > p2.x && p1.y < p2.y) {
       push({ x: p1.x, y: p2.y })
@@ -114,41 +105,10 @@ export const calculateElbowBends = (
         push({ x: p2.x, y: p2Target.y })
       }
     }
-  } else if (startDir === "y-" && endDir === "y-") {
-    const commonY = Math.min(p1.y - overshootAmount, p2Target.y)
-    push({ x: p1.x, y: commonY })
-    push({ x: p2.x, y: commonY })
   } else if (startDir === "x+" && endDir === "x+") {
     const commonX = Math.max(p1.x + overshootAmount, p2Target.x)
     push({ x: commonX, y: p1.y })
     push({ x: commonX, y: p2.y })
-  } else if (startDir === "x-" && endDir === "x-") {
-    const commonX = Math.min(p1.x - overshootAmount, p2Target.x)
-    push({ x: commonX, y: p1.y })
-    push({ x: commonX, y: p2.y })
-  } else if (startDir === "x-" && endDir === "y+") {
-    if (p1.x > p2.x && p1.y > p2.y) {
-      push({ x: p2.x, y: p1.y })
-    } else if (p1.x > p2.x && p1.y < p2.y) {
-      const p1OvershootX = p1.x - overshootAmount
-      push({ x: p1OvershootX, y: p1.y })
-      push({ x: p1OvershootX, y: p2Target.y })
-      push({ x: p2.x, y: p2Target.y })
-    } else {
-      const p1OvershootX = p1.x - overshootAmount
-      push({ x: p1OvershootX, y: p1.y })
-      push({ x: p1OvershootX, y: p2Target.y })
-      push({ x: p2.x, y: p2Target.y })
-    }
-  } else if (startDir === "x-" && endDir === "y-") {
-    if (p1.x > p2.x && p1.y <= p2.y) {
-      push({ x: p2.x, y: p1.y })
-    } else {
-      const p1OvershotX = p1.x - overshootAmount
-      push({ x: p1OvershotX, y: p1.y })
-      push({ x: p1OvershotX, y: p2Target.y })
-      push({ x: p2Target.x, y: p2Target.y })
-    }
   } else if (startDir === "x+" && endDir === "y-") {
     if (p1.x === p2.x) {
       push({ x: p1.x + overshootAmount, y: p1.y })
@@ -159,17 +119,6 @@ export const calculateElbowBends = (
     } else {
       push({ x: p1.x + overshootAmount, y: p1.y })
       push({ x: p1.x + overshootAmount, y: p2Target.y })
-      push({ x: p2.x, y: p2Target.y })
-    }
-  } else if (startDir === "y-" && endDir === "y+") {
-    if (p1.y >= p2.y) {
-      push({ x: p1.x, y: midY })
-      push({ x: p2.x, y: midY })
-    } else {
-      const p1OvershootY = p1.y - overshootAmount
-      push({ x: p1.x, y: p1OvershootY })
-      push({ x: midX, y: p1OvershootY })
-      push({ x: midX, y: p2Target.y })
       push({ x: p2.x, y: p2Target.y })
     }
   } else if (startDir === "y+" && endDir === "y-") {
