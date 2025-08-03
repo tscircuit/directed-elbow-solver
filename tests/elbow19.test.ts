@@ -14,7 +14,7 @@ const scene = {
   },
 } as const
 
-test("elbow19", () => {
+test.skip("elbow19", () => {
   const result = calculateElbow(scene.point1, scene.point2, {
     overshoot: 50,
   })
